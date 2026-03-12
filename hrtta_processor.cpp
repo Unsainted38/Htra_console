@@ -5,7 +5,7 @@
 
 #include <cmath>
 
-THrttaProcessor::THrttaProcessor(QObject *parent)
+HtraProcessor::HtraProcessor(QObject *parent)
     : QObject{parent} {
     Status = 0;                  //The function return value or error code. Status == 0 indicates no error. For details please check the Appendix 1 in the API Guide document.
     Device = NULL;              //Device handle. Use the device handle to specify device for manipulating in the API calls. The device handle must be initialized firstly by function Devcie_Open before it to be used.
@@ -20,34 +20,39 @@ THrttaProcessor::THrttaProcessor(QObject *parent)
     connect(m_WorkTimer, SIGNAL(timeout()), SLOT(onWorkTimer()));
     m_WorkTimer->start();
 
+    m_ReconfigureTimer = new QTimer(this);
+    m_ReconfigureTimer->setInterval(1000);
+    connect(m_ReconfigureTimer, SIGNAL(timeout()), this, SLOT(onReconfigureTimer()));
+
+
     m_elapsedTime.start();
 }
 
-double THrttaProcessor::centerFreq() {
+double HtraProcessor::centerFreq() {
     return SWP_ProfileOut.CenterFreq_Hz;
 }
 
-double THrttaProcessor::level() {
+double HtraProcessor::level() {
     return SWP_ProfileOut.RefLevel_dBm;
 }
 
-double THrttaProcessor::span() {
+double HtraProcessor::span() {
     return SWP_ProfileOut.Span_Hz;
 }
 
-double THrttaProcessor::rbw() {
+double HtraProcessor::rbw() {
     return SWP_ProfileOut.RBW_Hz;
 }
 
-double THrttaProcessor::vbw() {
+double HtraProcessor::vbw() {
     return SWP_ProfileOut.VBW_Hz;
 }
 
-uint32_t THrttaProcessor::sweepCount() {
+uint32_t HtraProcessor::sweepCount() {
     return TraceInfo.FullsweepTracePoints;
 }
 
-QVector<float> THrttaProcessor::getMinSweep() {
+QVector<float> HtraProcessor::getMinSweep() {
     QVector<float> result;
 
     for(int i = 0; i < TraceInfo.FullsweepTracePoints; ++i) {
@@ -57,19 +62,19 @@ QVector<float> THrttaProcessor::getMinSweep() {
     return result;
 }
 
-uint8_t THrttaProcessor::pickSearchType() {
+uint8_t HtraProcessor::pickSearchType() {
     return m_pickSearchType;
 }
 
-double THrttaProcessor::pickSearchCenter() {
+double HtraProcessor::pickSearchCenter() {
     return m_pickSearchCenter;
 }
 
-double THrttaProcessor::pickSearchWidth() {
+double HtraProcessor::pickSearchWidth() {
     return m_pickSearchWidth;
 }
 
-double THrttaProcessor::pick() {
+double HtraProcessor::pick() {
     if(m_pickSearchType == TSaRpcTypes::SIMPLE_MAXIMUM) {
         return getSimpleMaximum();
     }
@@ -81,81 +86,84 @@ double THrttaProcessor::pick() {
     return -300.0;
 }
 
-double THrttaProcessor::perTry() {
+double HtraProcessor::perTry() {
     return m_perTry;
 }
 
-void THrttaProcessor::onOpenCmd(quint64 transportId) {
+void HtraProcessor::onOpenCmd(quint64 transportId) {
     Q_UNUSED(transportId);
 }
 
-void THrttaProcessor::onOpenSerialCmd(quint64 transportId, uint32_t serial) {
+void HtraProcessor::onOpenSerialCmd(quint64 transportId, uint32_t serial) {
     Q_UNUSED(transportId);
     Q_UNUSED(serial);
 }
 
-void THrttaProcessor::onCloseCmd(quint64 transportId) {
+void HtraProcessor::onCloseCmd(quint64 transportId) {
     Q_UNUSED(transportId);
 }
 
-void THrttaProcessor::onSetCenter(quint64 transportId, uint64_t center) {
+void HtraProcessor::onSetCenter(quint64 transportId, uint64_t center) {
     Q_UNUSED(transportId);
     m_centerFreq = center;
-    m_connected = reconfigure();
+    //m_connected = reconfigure();
 }
 
-void THrttaProcessor::onSetLevel(quint64 transportId, uint64_t level) {
+void HtraProcessor::onSetLevel(quint64 transportId, uint64_t level) {
     Q_UNUSED(transportId);
     m_level = level;
-    m_connected = reconfigure();
+    //m_connected = reconfigure();
 }
 
-void THrttaProcessor::onSetSpan(quint64 transportId, uint64_t span) {
+void HtraProcessor::onSetSpan(quint64 transportId, uint64_t span) {
     Q_UNUSED(transportId);
     m_span = span;
-    m_connected = reconfigure();
+    //m_connected = reconfigure();
 }
 
-void THrttaProcessor::onSetRbw(quint64 transportId, uint64_t rbw) {
+void HtraProcessor::onSetRbw(quint64 transportId, uint64_t rbw) {
     Q_UNUSED(transportId);
     m_rbw = rbw;
-    m_connected = reconfigure();
+    //m_connected = reconfigure();
 }
 
-void THrttaProcessor::onSetVbw(quint64 transportId, uint64_t vbw) {
+void HtraProcessor::onSetVbw(quint64 transportId, uint64_t vbw) {
     Q_UNUSED(transportId);
     m_vbw = vbw;
-    m_connected = reconfigure();
+    //m_connected = reconfigure();
 }
 
-void THrttaProcessor::onSetPickSearchType(quint64 transportId, uint8_t type) {
+void HtraProcessor::onSetPickSearchType(quint64 transportId, uint8_t type) {
     Q_UNUSED(transportId);
     m_pickSearchType = type;
 }
 
-void THrttaProcessor::onSetPickSearchCenter(quint64 transportId, uint64_t center) {
+void HtraProcessor::onSetPickSearchCenter(quint64 transportId, uint64_t center) {
     Q_UNUSED(transportId);
     m_pickSearchCenter = center;
 }
 
-void THrttaProcessor::onSetPickSearchWidth(quint64 transportId, uint64_t width) {
+void HtraProcessor::onSetPickSearchWidth(quint64 transportId, uint64_t width) {
     Q_UNUSED(transportId);
     m_pickSearchWidth = width;
 }
 
-void THrttaProcessor::onSetPickSearchFullSpan(quint64 transportId) {
+void HtraProcessor::onSetPickSearchFullSpan(quint64 transportId) {
     Q_UNUSED(transportId);
     m_pickSearchCenter = m_centerFreq;
     m_pickSearchWidth = m_span;
 }
 
-void THrttaProcessor::onReconnectTimer() {
+void HtraProcessor::onReconnectTimer() {
     if(!m_connected) {
         if(Device != NULL) {
             Device_Close(&Device);
         }
 
+        m_ReconfigureTimer->stop();
+        qDebug() << "Timer start";
         m_connected = false;
+
 
         BootProfile_TypeDef BootProfile; //Parameters for device boot.
         BootInfo_TypeDef BootInfo;       //Feedback information of the devic boot. Hardware version, firmware version and other information.
@@ -168,6 +176,8 @@ void THrttaProcessor::onReconnectTimer() {
 
         if(Status == APIRETVAL_NoError) {
             printf("Device is opened successfully\n");
+            m_ReconfigureTimer->start();
+            qDebug() << "Timer start";
         }
         /*if failed, an error code is returned.Please re-open the device according to suggestions*/
         else {
@@ -222,7 +232,7 @@ void THrttaProcessor::onReconnectTimer() {
     }
 }
 
-void THrttaProcessor::onWorkTimer() {
+void HtraProcessor::onWorkTimer() {
     if(!m_connected) {
         if(Device != NULL) {
             m_centerFreq = 3e9;
@@ -232,6 +242,8 @@ void THrttaProcessor::onWorkTimer() {
             m_level = 0;
         }
 
+        m_ReconfigureTimer->stop();
+        qDebug() << "Timer stop";
         return;
     }
 
@@ -243,11 +255,15 @@ void THrttaProcessor::onWorkTimer() {
             m_vbw = 100e3;
             m_level = 0;
             m_connected = false;
+            m_ReconfigureTimer->stop();
+            qDebug() << "Timer stop";
             return;
         }
     }
 
     m_WorkTimer->stop();
+    //m_ReconfigureTimer->stop();
+    //qDebug() << "Timer stop";
 
     QElapsedTimer m_elapsed;
     m_elapsed.start();
@@ -267,9 +283,15 @@ void THrttaProcessor::onWorkTimer() {
 
     m_elapsedTime.restart();
     m_WorkTimer->start();
+    //m_ReconfigureTimer->start();
+    //qDebug() << "Timer start";
 }
 
-bool THrttaProcessor::reconfigure() {
+void HtraProcessor::onReconfigureTimer() {
+    m_connected = reconfigure();
+}
+
+bool HtraProcessor::reconfigure() {
 
     SWP_ProfileDeInit(&Device, &SWP_ProfileIn);           //initialize the SWP_ProfileIn.
     SWP_ProfileIn.CenterFreq_Hz = m_centerFreq;
@@ -283,21 +305,21 @@ bool THrttaProcessor::reconfigure() {
 
     Status = SWP_Configuration(&Device, &SWP_ProfileIn, &SWP_ProfileOut, &TraceInfo); //deliever configuration in SWP mode.
 
-    qDebug() << "--------------FullsweepTracePoints" << TraceInfo.FullsweepTracePoints;
-    qDebug() << "--------------PartialsweepTracePoints" << TraceInfo.PartialsweepTracePoints;
-    qDebug() << "--------------TotalHops" << TraceInfo.TotalHops;
-    qDebug() << "--------------UserStartIndex" << TraceInfo.UserStartIndex;
-    qDebug() << "--------------UserStopIndex" << TraceInfo.UserStopIndex;
-    qDebug() << "--------------TraceBinBW_Hz" << TraceInfo.TraceBinBW_Hz;
-    qDebug() << "--------------StartFreq_Hz" << TraceInfo.StartFreq_Hz;
-    qDebug() << "--------------AnalysisBW_Hz" << TraceInfo.AnalysisBW_Hz;
-    qDebug() << "--------------TraceDetectRatio" << TraceInfo.TraceDetectRatio;
-    qDebug() << "--------------DecimateFactor" << TraceInfo.DecimateFactor;
-    qDebug() << "--------------FrameTimeMultiple" << TraceInfo.FrameTimeMultiple;
-    qDebug() << "--------------FrameTime" << TraceInfo.FrameTime;
-    qDebug() << "--------------EstimateMinSweepTime" << TraceInfo.EstimateMinSweepTime;
-    qDebug() << "--------------SamplePoints" << TraceInfo.SamplePoints;
-    qDebug() << "--------------GainParameter" << TraceInfo.GainParameter;
+    //qDebug() << "--------------FullsweepTracePoints" << TraceInfo.FullsweepTracePoints;
+    //qDebug() << "--------------PartialsweepTracePoints" << TraceInfo.PartialsweepTracePoints;
+    //qDebug() << "--------------TotalHops" << TraceInfo.TotalHops;
+    //qDebug() << "--------------UserStartIndex" << TraceInfo.UserStartIndex;
+    //qDebug() << "--------------UserStopIndex" << TraceInfo.UserStopIndex;
+    //qDebug() << "--------------TraceBinBW_Hz" << TraceInfo.TraceBinBW_Hz;
+    //qDebug() << "--------------StartFreq_Hz" << TraceInfo.StartFreq_Hz;
+    //qDebug() << "--------------AnalysisBW_Hz" << TraceInfo.AnalysisBW_Hz;
+    //qDebug() << "--------------TraceDetectRatio" << TraceInfo.TraceDetectRatio;
+    //qDebug() << "--------------DecimateFactor" << TraceInfo.DecimateFactor;
+    //qDebug() << "--------------FrameTimeMultiple" << TraceInfo.FrameTimeMultiple;
+    //qDebug() << "--------------FrameTime" << TraceInfo.FrameTime;
+    //qDebug() << "--------------EstimateMinSweepTime" << TraceInfo.EstimateMinSweepTime;
+    //qDebug() << "--------------SamplePoints" << TraceInfo.SamplePoints;
+    //qDebug() << "--------------GainParameter" << TraceInfo.GainParameter;
 
     if(Status != 0) {
         return false;
@@ -314,7 +336,7 @@ bool THrttaProcessor::reconfigure() {
     return true;
 }
 
-double THrttaProcessor::getSimpleMaximum() {
+double HtraProcessor::getSimpleMaximum() {
     QVector<float> spectrum = PowerSpec_dBm;
 
     if(spectrum.count() <= 0) {
@@ -343,7 +365,7 @@ double THrttaProcessor::getSimpleMaximum() {
     return max;
 }
 
-double THrttaProcessor::getIntegralMaximum() {
+double HtraProcessor::getIntegralMaximum() {
     float sum = 0.0;
     uint32_t m_itemCount = 0;
 

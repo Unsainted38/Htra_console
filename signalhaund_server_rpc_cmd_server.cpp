@@ -55,7 +55,7 @@ TSignalHaundServerRpcCmdServer::TSignalHaundServerRpcCmdServer(QObject *parent)
     cmdProcessor->addCommand(setPickSearchFullSpanCmd);
 }
 
-void TSignalHaundServerRpcCmdServer::connectImplement(THrttaProcessor *object) {
+void TSignalHaundServerRpcCmdServer::connectImplement(HtraProcessor *object) {
     connect(
         openCmd, SIGNAL(translateNULL(quint64)),
         object,  SLOT(onOpenCmd(quint64))

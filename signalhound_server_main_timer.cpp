@@ -14,7 +14,7 @@ TSignalhoundServerMainTimer::TSignalhoundServerMainTimer(
         (QLoger::LogViewType)logType
     );
 
-    m_shProcessor = new THrttaProcessor;
+    m_shProcessor = new HtraProcessor;
 
     m_lastCommandLoger = new TSignalHoundServerRpcLastCommandLoger;
 
@@ -62,5 +62,6 @@ void TSignalhoundServerMainTimer::onLogerTimer() {
     m_loger->append(QString().sprintf("Per try          : %f", m_shProcessor->perTry()), "Hound");
     m_loger->append(QString("Switch Mode      : " + proxyServer->RFprocessor->mode), "Hound");
     m_loger->append("--------------------------------------", "Hound");
+    //m_loger->append(QString().sprintf("Type pick        : %s", m_shProcessor, "Hound");
     m_loger->print();
 }

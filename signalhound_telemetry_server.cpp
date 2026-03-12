@@ -17,7 +17,7 @@ TSignalhoundTelemetryServer::TSignalhoundTelemetryServer(
     m_signalhoundProcessor(0) {
 }
 
-void TSignalhoundTelemetryServer::setSignalhoundProcessor(THrttaProcessor *signalhoundProcessor) {
+void TSignalhoundTelemetryServer::setSignalhoundProcessor(HtraProcessor *signalhoundProcessor) {
     m_signalhoundProcessor = signalhoundProcessor;
 }
 

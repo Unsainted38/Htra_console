@@ -19,7 +19,7 @@ class TSignalHaundServerRpcCmdServer : public QObject {
     Q_OBJECT
 public:
     explicit TSignalHaundServerRpcCmdServer(QObject *parent = 0);
-    void connectImplement(THrttaProcessor *object);
+    void connectImplement(HtraProcessor *object);
     void connectImplement(TSignalHoundServerRpcLastCommandLoger *object);
 private:
     uint16_t m_port;

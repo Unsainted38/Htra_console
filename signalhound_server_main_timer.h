@@ -25,7 +25,7 @@ private:
     QTimer *m_logerTimer;
     QLoger::QLogerTimeLockedFacade *m_loger;
 
-    THrttaProcessor *m_shProcessor;
+    HtraProcessor *m_shProcessor;
 
     TSignalHaundServerRpcCmdServer *m_rpcCmdServer;
     TSignalhoundTelemetryServer *m_signalhoundTelemetryServer;

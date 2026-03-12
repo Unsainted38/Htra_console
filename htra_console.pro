@@ -34,7 +34,7 @@ LIBS += \
   -L$${INC_PATH}/htra_spectrum/HTRA_API/x64/htra_api/ -llibfftw3-3 \
   -L$${INC_PATH}/htra_spectrum/HTRA_API/x64/htra_api/ -llibliquid
 } else {
-QMAKE_CXXFLAGS += -std=gnu++17
+/home/user/develop/target/linux/spps/data_servers/htra_console/htra_consoleQMAKE_CXXFLAGS += -std=gnu++17
 LIBS += \
     -lpthread \
     -L$${INC_PATH}/htra_spectrum/HTRA_API/x64/linux/ -lfftw3 \

@@ -19,12 +19,12 @@ public:
         uint16_t timeout = 1000,
         bool startFlag = true,
         QObject *parent = 0);
-    void setSignalhoundProcessor(THrttaProcessor *signalhoundProcessor);
+    void setSignalhoundProcessor(HtraProcessor *signalhoundProcessor);
 public slots:
     void sendTelemetry();
 signals:
 private:
-    THrttaProcessor *m_signalhoundProcessor;
+    HtraProcessor *m_signalhoundProcessor;
 };
 
 #endif // TSIGNALHOUNDTELEMETRYSERVER_H

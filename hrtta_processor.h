@@ -11,10 +11,10 @@
 
 #include "htra_api.h"
 
-class THrttaProcessor : public QObject {
+class HtraProcessor : public QObject {
     Q_OBJECT
 public:
-    explicit THrttaProcessor(QObject *parent = nullptr);
+    explicit HtraProcessor(QObject *parent = nullptr);
     double centerFreq();
     double level();
     double span();
@@ -45,11 +45,13 @@ public slots:
 private slots:
     void onReconnectTimer();
     void onWorkTimer();
+    void onReconfigureTimer();
 private:
     bool m_connected;
 
     QTimer *m_ReconnectTimer;
     QTimer *m_WorkTimer;
+    QTimer *m_ReconfigureTimer;
 
     double m_centerFreq;
     double m_level;

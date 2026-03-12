@@ -23,9 +23,14 @@ void HtraProxyServer::onDataReady() {
 
     if(clientSocket) {
         currentClient = clientSocket;
-        ParseData(currentClient->readAll());
+        buffer.append(currentClient->readAll());
+
+        while(ParseData(buffer)) {
+            continue;
+        }
     }
 }
+
 
 void HtraProxyServer::sendReply(QByteArray reply) {
     QString clientIp = currentClient->peerAddress().toString();
@@ -38,7 +43,7 @@ void HtraProxyServer::sendReply(QByteArray reply) {
     currentClient->write(reply);
 }
 
-void HtraProxyServer::setHtraProcessor(THrttaProcessor *implement) {
+void HtraProxyServer::setHtraProcessor(HtraProcessor *implement) {
     processor = implement;
 }
 
@@ -53,33 +58,33 @@ void HtraProxyServer::loadConfig() {
     settings.endGroup();
 }
 
-void HtraProxyServer::ParseData(QByteArray data) {
-    buffer.append(data);
+bool HtraProxyServer::ParseData(QByteArray &data) {
     //qDebug() << "Data:" << data.toHex();
-    int headerIndex = buffer.indexOf(HEADER);
+    int headerIndex = data.indexOf(HEADER);
 
     if(headerIndex < 0) {
-        return;
+        return false;
     }
 
-    buffer.remove(0, headerIndex);
+    data.remove(0, headerIndex);
     headerIndex = 0;
 
-    if(buffer.size() < 3) {
-        return;
+    if(data.size() < 3) {
+        return false;
     }
 
-    quint8 packetLength = buffer[2];
+    quint8 packetLength = data[2];
 
-    if(buffer.size() < packetLength + 3) {
-        return;
+    if(data.size() < packetLength + 3) {
+        return false;
     }
 
-    QByteArray packet = buffer.mid(headerIndex, packetLength + 3);
+    QByteArray packet = data.mid(headerIndex, packetLength + 3);
     emit translateLastPacket(packet.toHex());
     //qDebug() << "Packet:" << packet.toHex();
-    buffer.remove(buffer.indexOf(packet), packet.size());
+    data.remove(data.indexOf(packet), packet.size());
     ProcessHtraCmd(packet);
+    return true;
 }
 
 void HtraProxyServer::ProcessHtraCmd(QByteArray packet) {

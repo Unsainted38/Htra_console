@@ -41,7 +41,7 @@ class HtraProxyServer : public QObject {
     QHostAddress ListenIp;
     quint16 port;
     QString name;
-    THrttaProcessor *processor;
+    HtraProcessor *processor;
 
     QByteArray buffer;
     QTcpSocket *currentClient;
@@ -50,14 +50,14 @@ public:
     explicit HtraProxyServer(QString configPath, QString section, QObject *parent = nullptr);
 
     void sendReply(QByteArray reply);
-    void setHtraProcessor(THrttaProcessor *implement);
+    void setHtraProcessor(HtraProcessor *implement);
     SwitcherProcessor *RFprocessor;
 signals:
     void translateData(QByteArray);
     void translateLastPacket(QByteArray);
 private:
     void loadConfig();
-    void ParseData(QByteArray data);
+    bool ParseData(QByteArray &data);
     void ProcessHtraCmd(QByteArray packet);
     void ProcessSwitcherCmd(QByteArray packet);
     void makeResponse(quint8 cmdId);
