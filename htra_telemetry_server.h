@@ -1,30 +1,32 @@
-#ifndef TSIGNALHOUNDTELEMETRYSERVER_H
-#define TSIGNALHOUNDTELEMETRYSERVER_H
+#ifndef HTRATELEMETRYSERVER_H
+#define HTRATELEMETRYSERVER_H
 
 #include <QObject>
 #include <QVector>
 
 #include <stdint.h>
 
-#include "network/network_transport_lib/tcp_telemetry_server_helper.h"
-
 #include "hrtta_processor.h"
 
-class TSignalhoundTelemetryServer : public TTcpTelemetryServerHelper {
+class HtraTelemetryServer : public QObject {
     Q_OBJECT
+    QString fileName;
+    QString section;
+    uint16_t timeout;
+    bool startFlag = false;
 public:
-    explicit TSignalhoundTelemetryServer(
+    explicit HtraTelemetryServer(
         const QString &fileName,
         const QString &section,
         uint16_t timeout = 1000,
         bool startFlag = true,
         QObject *parent = 0);
-    void setSignalhoundProcessor(HtraProcessor *signalhoundProcessor);
+    void setHtraProcessor(HtraProcessor *processor);
 public slots:
     void sendTelemetry();
 signals:
 private:
-    HtraProcessor *m_signalhoundProcessor;
+    HtraProcessor *m_processor;
 };
 
-#endif // TSIGNALHOUNDTELEMETRYSERVER_H
+#endif // HTRATELEMETRYSERVER_H

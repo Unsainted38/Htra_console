@@ -5,11 +5,20 @@
 #include <QTimer>
 #include <QElapsedTimer>
 #include <QVector>
-#include <memory>
-
-#include "network/rpc/devices/sh_rpc_proxy_lib/command/sa_rpc_types.h"
 
 #include "htra_api.h"
+
+struct PowerPickType {
+    static const quint8 SIMPLE_MAXIMUM = 0;
+    static const quint8 INTEGRAL_MAXIMUM = 1;
+    static QString getPickSearchType(quint8 type) {
+        QString res;
+        if (type == SIMPLE_MAXIMUM) res = "SIMPLE_MAXIMUM";
+        else if (type == INTEGRAL_MAXIMUM) res = "INTEGRAL_MAXIMUM";
+        else res = "Unknown pick type";
+        return res;
+    }
+};
 
 class HtraProcessor : public QObject {
     Q_OBJECT

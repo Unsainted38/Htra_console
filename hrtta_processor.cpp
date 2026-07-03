@@ -75,11 +75,11 @@ double HtraProcessor::pickSearchWidth() {
 }
 
 double HtraProcessor::pick() {
-    if(m_pickSearchType == TSaRpcTypes::SIMPLE_MAXIMUM) {
+    if(m_pickSearchType == PowerPickType::SIMPLE_MAXIMUM) {
         return getSimpleMaximum();
     }
 
-    if(m_pickSearchType == TSaRpcTypes::INTEGRAL_MAXIMUM) {
+    if(m_pickSearchType == PowerPickType::INTEGRAL_MAXIMUM) {
         return getIntegralMaximum();
     }
 

@@ -1,35 +1,33 @@
-#include "signalhound_telemetry_server.h"
+#include "htra_telemetry_server.h"
+#include <QDebug>
 
-#include "algorithm/config_path_helper.h"
-
-TSignalhoundTelemetryServer::TSignalhoundTelemetryServer(
+HtraTelemetryServer::HtraTelemetryServer(
     const QString &fileName,
     const QString &section,
     uint16_t timeout,
     bool startFlag,
     QObject *parent) :
-    TTcpTelemetryServerHelper(
-        fileName,
-        section,
-        timeout,
-        startFlag,
-        parent),
-    m_signalhoundProcessor(0) {
+        QObject(parent),
+        fileName(fileName),
+        section(section),
+        timeout(timeout),
+        startFlag(startFlag),
+        m_processor(0) {
 }
 
-void TSignalhoundTelemetryServer::setSignalhoundProcessor(HtraProcessor *signalhoundProcessor) {
-    m_signalhoundProcessor = signalhoundProcessor;
+void HtraTelemetryServer::setHtraProcessor(HtraProcessor *processor) {
+    m_processor = processor;
 }
 
-void TSignalhoundTelemetryServer::sendTelemetry() {
-    if(m_signalhoundProcessor == 0) {
+void HtraTelemetryServer::sendTelemetry() {
+    if(m_processor == 0) {
         return;
     }
 
-    m_telemetryServer->telemetryPacketBegin();
+    //m_telemetryServer->telemetryPacketBegin();
     bool online = true;
 
-    if(m_signalhoundProcessor->getMinSweep().count() <= 0) {
+    if(m_processor->getMinSweep().count() <= 0) {
         qDebug() << "Empty array!";
         return;
     }
@@ -37,18 +35,18 @@ void TSignalhoundTelemetryServer::sendTelemetry() {
     QVector<float> vector;
     vector.append(10.0);
     vector.append(12.0);
-    (*m_telemetryServer) << online
-                         << m_signalhoundProcessor->centerFreq()
-                         << m_signalhoundProcessor->level()
-                         << m_signalhoundProcessor->span()
-                         << m_signalhoundProcessor->rbw()
-                         << m_signalhoundProcessor->vbw()
-                         //<< m_signalhoundProcessor->getMinSweep()
-                         << m_signalhoundProcessor->pickSearchType()
-                         << m_signalhoundProcessor->pickSearchCenter()
-                         << m_signalhoundProcessor->pickSearchWidth()
-                         << m_signalhoundProcessor->pick();
+    // (*m_telemetryServer) << online
+    //                      << m_processor->centerFreq()
+    //                      << m_processor->level()
+    //                      << m_processor->span()
+    //                      << m_processor->rbw()
+    //                      << m_processor->vbw()
+    //                      //<< m_processor->getMinSweep()
+    //                      << m_processor->pickSearchType()
+    //                      << m_processor->pickSearchCenter()
+    //                      << m_processor->pickSearchWidth()
+    //                      << m_processor->pick();
 
 
-    m_telemetryServer->telemetryPacketEnd();
+    // m_telemetryServer->telemetryPacketEnd();
 }
