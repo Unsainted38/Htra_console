@@ -7,50 +7,27 @@
 #include <QVector>
 
 #include "htra_api.h"
+#include "devices/i_htra_device.h"
 
-struct PowerPickType {
-    static const quint8 SIMPLE_MAXIMUM = 0;
-    static const quint8 INTEGRAL_MAXIMUM = 1;
-    static QString getPickSearchType(quint8 type) {
-        QString res;
-        if (type == SIMPLE_MAXIMUM) res = "SIMPLE_MAXIMUM";
-        else if (type == INTEGRAL_MAXIMUM) res = "INTEGRAL_MAXIMUM";
-        else res = "Unknown pick type";
-        return res;
-    }
-};
-
-class HtraProcessor : public QObject {
+class HtraDevice : public IHtraDevice {
     Q_OBJECT
 public:
-    explicit HtraProcessor(QObject *parent = nullptr);
-    double centerFreq();
-    double level();
-    double span();
-    double rbw();
-    double vbw();
+    explicit HtraDevice(QObject *parent = nullptr);
+    double centerFreq() const override;
+    double level() const override;
+    double span() const override;
+    double rbw() const override;
+    double vbw() const override;
     uint32_t sweepCount();
     QVector<float> getMinSweep();
-    uint8_t pickSearchType();
-    double pickSearchCenter();
-    double pickSearchWidth();
-    double pick();
+    uint8_t pickSearchType() const override;
+    double pickSearchCenter() const override;
+    double pickSearchWidth() const override;
+    double pick() const override;
     double perTry();
+    bool isOnline() const override;
 signals:
     void translateDataReady();
-public slots:
-    void onOpenCmd(quint64 transportId);
-    void onOpenSerialCmd(quint64 transportId, uint32_t serial);
-    void onCloseCmd(quint64 transportId);
-    void onSetCenter(quint64 transportId, uint64_t center);
-    void onSetLevel(quint64 transportId, uint64_t level);
-    void onSetSpan(quint64 transportId, uint64_t span);
-    void onSetRbw(quint64 transportId, uint64_t rbw);
-    void onSetVbw(quint64 transportId, uint64_t vbw);
-    void onSetPickSearchType(quint64 transportId, uint8_t type);
-    void onSetPickSearchCenter(quint64 transportId, uint64_t center);
-    void onSetPickSearchWidth(quint64 transportId, uint64_t width);
-    void onSetPickSearchFullSpan(quint64 transportId);
 private slots:
     void onReconnectTimer();
     void onWorkTimer();
@@ -95,8 +72,19 @@ private:
     double m_perTry;
 
     bool reconfigure();
-    double getSimpleMaximum();
-    double getIntegralMaximum();
+    double getSimpleMaximum() const;
+    double getIntegralMaximum() const;
+
+public slots:
+    void onSetCenter(uint64_t center) override;
+    void onSetLevel(uint64_t level) override;
+    void onSetSpan(uint64_t span) override;
+    void onSetRbw(uint64_t rbw) override;
+    void onSetVbw(uint64_t vbw) override;
+    void onSetPickSearchType(uint8_t type) override;
+    void onSetPickSearchCenter(uint64_t center) override;
+    void onSetPickSearchWidth(uint64_t width) override;
+    void onSetPickSearchFullSpan() override;
 };
 
 #endif // THRTTAPROCESSOR_H

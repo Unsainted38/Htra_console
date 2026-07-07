@@ -1,12 +1,12 @@
-#include "hrtta_processor.h"
+#include "htra_device.h"
 
 #include <QVector>
 #include <QDebug>
 
 #include <cmath>
 
-HtraProcessor::HtraProcessor(QObject *parent)
-    : QObject{parent} {
+HtraDevice::HtraDevice(QObject *parent)
+    : IHtraDevice{parent} {
     Status = 0;                  //The function return value or error code. Status == 0 indicates no error. For details please check the Appendix 1 in the API Guide document.
     Device = NULL;              //Device handle. Use the device handle to specify device for manipulating in the API calls. The device handle must be initialized firstly by function Devcie_Open before it to be used.
 
@@ -28,31 +28,31 @@ HtraProcessor::HtraProcessor(QObject *parent)
     m_elapsedTime.start();
 }
 
-double HtraProcessor::centerFreq() {
+double HtraDevice::centerFreq() const {
     return SWP_ProfileOut.CenterFreq_Hz;
 }
 
-double HtraProcessor::level() {
+double HtraDevice::level() const {
     return SWP_ProfileOut.RefLevel_dBm;
 }
 
-double HtraProcessor::span() {
+double HtraDevice::span() const {
     return SWP_ProfileOut.Span_Hz;
 }
 
-double HtraProcessor::rbw() {
+double HtraDevice::rbw() const {
     return SWP_ProfileOut.RBW_Hz;
 }
 
-double HtraProcessor::vbw() {
+double HtraDevice::vbw() const {
     return SWP_ProfileOut.VBW_Hz;
 }
 
-uint32_t HtraProcessor::sweepCount() {
+uint32_t HtraDevice::sweepCount() {
     return TraceInfo.FullsweepTracePoints;
 }
 
-QVector<float> HtraProcessor::getMinSweep() {
+QVector<float> HtraDevice::getMinSweep() {
     QVector<float> result;
 
     for(int i = 0; i < TraceInfo.FullsweepTracePoints; ++i) {
@@ -62,19 +62,19 @@ QVector<float> HtraProcessor::getMinSweep() {
     return result;
 }
 
-uint8_t HtraProcessor::pickSearchType() {
+uint8_t HtraDevice::pickSearchType() const {
     return m_pickSearchType;
 }
 
-double HtraProcessor::pickSearchCenter() {
+double HtraDevice::pickSearchCenter() const {
     return m_pickSearchCenter;
 }
 
-double HtraProcessor::pickSearchWidth() {
+double HtraDevice::pickSearchWidth() const {
     return m_pickSearchWidth;
 }
 
-double HtraProcessor::pick() {
+double HtraDevice::pick() const {
     if(m_pickSearchType == PowerPickType::SIMPLE_MAXIMUM) {
         return getSimpleMaximum();
     }
@@ -86,75 +86,16 @@ double HtraProcessor::pick() {
     return -300.0;
 }
 
-double HtraProcessor::perTry() {
+double HtraDevice::perTry() {
     return m_perTry;
 }
 
-void HtraProcessor::onOpenCmd(quint64 transportId) {
-    Q_UNUSED(transportId);
+bool HtraDevice::isOnline() const
+{
+    return m_connected;
 }
 
-void HtraProcessor::onOpenSerialCmd(quint64 transportId, uint32_t serial) {
-    Q_UNUSED(transportId);
-    Q_UNUSED(serial);
-}
-
-void HtraProcessor::onCloseCmd(quint64 transportId) {
-    Q_UNUSED(transportId);
-}
-
-void HtraProcessor::onSetCenter(quint64 transportId, uint64_t center) {
-    Q_UNUSED(transportId);
-    m_centerFreq = center;
-    //m_connected = reconfigure();
-}
-
-void HtraProcessor::onSetLevel(quint64 transportId, uint64_t level) {
-    Q_UNUSED(transportId);
-    m_level = level;
-    //m_connected = reconfigure();
-}
-
-void HtraProcessor::onSetSpan(quint64 transportId, uint64_t span) {
-    Q_UNUSED(transportId);
-    m_span = span;
-    //m_connected = reconfigure();
-}
-
-void HtraProcessor::onSetRbw(quint64 transportId, uint64_t rbw) {
-    Q_UNUSED(transportId);
-    m_rbw = rbw;
-    //m_connected = reconfigure();
-}
-
-void HtraProcessor::onSetVbw(quint64 transportId, uint64_t vbw) {
-    Q_UNUSED(transportId);
-    m_vbw = vbw;
-    //m_connected = reconfigure();
-}
-
-void HtraProcessor::onSetPickSearchType(quint64 transportId, uint8_t type) {
-    Q_UNUSED(transportId);
-    m_pickSearchType = type;
-}
-
-void HtraProcessor::onSetPickSearchCenter(quint64 transportId, uint64_t center) {
-    Q_UNUSED(transportId);
-    m_pickSearchCenter = center;
-}
-
-void HtraProcessor::onSetPickSearchWidth(quint64 transportId, uint64_t width) {
-    Q_UNUSED(transportId);
-    m_pickSearchWidth = width;
-}
-
-void HtraProcessor::onSetPickSearchFullSpan(quint64 transportId) {
-    Q_UNUSED(transportId);
-    m_pickSearchCenter = m_centerFreq;
-    m_pickSearchWidth = m_span;
-}
-
-void HtraProcessor::onReconnectTimer() {
+void HtraDevice::onReconnectTimer() {
     if(!m_connected) {
         if(Device != NULL) {
             Device_Close(&Device);
@@ -232,7 +173,7 @@ void HtraProcessor::onReconnectTimer() {
     }
 }
 
-void HtraProcessor::onWorkTimer() {
+void HtraDevice::onWorkTimer() {
     if(!m_connected) {
         if(Device != NULL) {
             m_centerFreq = 3e9;
@@ -287,11 +228,11 @@ void HtraProcessor::onWorkTimer() {
     //qDebug() << "Timer start";
 }
 
-void HtraProcessor::onReconfigureTimer() {
+void HtraDevice::onReconfigureTimer() {
     m_connected = reconfigure();
 }
 
-bool HtraProcessor::reconfigure() {
+bool HtraDevice::reconfigure() {
 
     SWP_ProfileDeInit(&Device, &SWP_ProfileIn);           //initialize the SWP_ProfileIn.
     SWP_ProfileIn.CenterFreq_Hz = m_centerFreq;
@@ -336,7 +277,7 @@ bool HtraProcessor::reconfigure() {
     return true;
 }
 
-double HtraProcessor::getSimpleMaximum() {
+double HtraDevice::getSimpleMaximum() const {
     QVector<float> spectrum = PowerSpec_dBm;
 
     if(spectrum.count() <= 0) {
@@ -365,7 +306,7 @@ double HtraProcessor::getSimpleMaximum() {
     return max;
 }
 
-double HtraProcessor::getIntegralMaximum() {
+double HtraDevice::getIntegralMaximum() const {
     float sum = 0.0;
     uint32_t m_itemCount = 0;
 
@@ -397,4 +338,42 @@ double HtraProcessor::getIntegralMaximum() {
     sum /= m_pickSearchWidth;
     float res = 10.0 * log10(sum);
     return res;
+}
+
+
+void HtraDevice::onSetCenter(uint64_t center) {
+    m_centerFreq = center;
+}
+
+void HtraDevice::onSetLevel(uint64_t level) {
+    m_level = level;
+}
+
+void HtraDevice::onSetSpan(uint64_t span) {
+    m_span = span;
+}
+
+void HtraDevice::onSetRbw(uint64_t rbw) {
+    m_rbw = rbw;
+}
+
+void HtraDevice::onSetVbw(uint64_t vbw) {
+    m_vbw = vbw;
+}
+
+void HtraDevice::onSetPickSearchType(uint8_t type) {
+    m_pickSearchType = type;
+}
+
+void HtraDevice::onSetPickSearchCenter(uint64_t center) {
+    m_pickSearchCenter = center;
+}
+
+void HtraDevice::onSetPickSearchWidth(uint64_t width) {
+    m_pickSearchWidth = width;
+}
+
+void HtraDevice::onSetPickSearchFullSpan() {
+    m_pickSearchCenter = m_centerFreq;
+    m_pickSearchWidth = m_span;
 }
