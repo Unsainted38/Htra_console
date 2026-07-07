@@ -2,24 +2,27 @@
 
 
 HtraServerMainTimer::HtraServerMainTimer(
+    IHtraDevice &device,
     QObject *parent) :
-    QObject(parent) {
-
-    m_processor = new HtraProcessor;
+    QObject(parent),
+    m_device(device),
+    provider(m_device),
+    builder(),
+    packetSource(builder, provider) {
 
     htraTelemetryServer = new HtraTelemetryServer(
         QCoreApplication::applicationDirPath() +
         "/etc/client_server/config.ini",
-        "SignalHtraTelemetryServer"
+        "HtraTelemetryServer",
+        100,
+        packetSource
     );
     proxyServer = new HtraProxyServer(
         QCoreApplication::applicationDirPath() +
         "/etc/client_server/config.ini",
-        "BasProxyServer");
-    //htraTelemetryServer->stopTelemetry();
-    htraTelemetryServer->setHtraProcessor(m_processor);
-    proxyServer->setHtraProcessor(m_processor);
-    connect(m_processor, SIGNAL(translateDataReady()), htraTelemetryServer, SLOT(sendTelemetry()));
+        "HtraProxyServer",
+        m_device);
+    connect(&m_device, SIGNAL(translateDataReady()), htraTelemetryServer, SLOT(sendTelemetry()));
 
     m_loggerTimer = new QTimer;
     m_loggerTimer->setInterval(250);
@@ -28,24 +31,33 @@ HtraServerMainTimer::HtraServerMainTimer(
 }
 
 void HtraServerMainTimer::onLogerTimer() {
-    clearConsole();
-    //qDebug() << (QString().sprintf("Last command : %s", m_lastCommandLoger->lastCommand().toLatin1().data());
-    qDebug() << "--------------------------------------";
-    qDebug() << QString().asprintf("Center freq      : %f", m_processor->centerFreq());
-    qDebug() << QString().asprintf("Level            : %f", m_processor->level());
-    qDebug() << QString().asprintf("Span             : %f", m_processor->span());
-    qDebug() << QString().asprintf("RBW              : %f", m_processor->rbw());
-    qDebug() << QString().asprintf("VBW              : %f", m_processor->vbw());
-    qDebug() << QString().asprintf("Count            : %d", m_processor->sweepCount());
-    qDebug() << "--------------------------------------";
-    qDebug() << QString().asprintf("Type pick        : %s", PowerPickType::getPickSearchType(m_processor->pickSearchType()).toLatin1().data());
-    qDebug() << QString().asprintf("Center pick freq : %f", m_processor->pickSearchCenter());
-    qDebug() << QString().asprintf("Width pick       : %f", m_processor->pickSearchWidth());
-    qDebug() << QString().asprintf("Pick level       : %f", m_processor->pick());
-    qDebug() << "--------------------------------------";
-    qDebug() << QString().asprintf("Per try          : %f", m_processor->perTry());
-    qDebug() << QString("Switch Mode      : " + proxyServer->RFprocessor->mode);
-    qDebug() << "--------------------------------------";
-    //qDebug() << (QString().sprintf("Type pick        : %s", m_processor;
 
+    QString text;
+
+    text += "--------------------------------------\n";
+    text += QString::asprintf("Center freq      : %f\n", m_device.centerFreq());
+    text += QString::asprintf("Level            : %f\n", m_device.level());
+    text += QString::asprintf("Span             : %f\n", m_device.span());
+    text += QString::asprintf("RBW              : %f\n", m_device.rbw());
+    text += QString::asprintf("VBW              : %f\n", m_device.vbw());
+    text += QString::asprintf("Count            : %d\n", m_device.sweepCount());
+
+    text += "--------------------------------------\n";
+    text += QString::asprintf("Type pick        : %s\n",
+                              PowerPickType::getPickSearchType(m_device.pickSearchType())
+                                  .toLatin1()
+                                  .data());
+
+    text += QString::asprintf("Center pick freq : %f\n", m_device.pickSearchCenter());
+    text += QString::asprintf("Width pick       : %f\n", m_device.pickSearchWidth());
+    text += QString::asprintf("Pick level       : %f\n", m_device.pick());
+
+    text += "--------------------------------------\n";
+    text += QString::asprintf("Per try          : %f\n", m_device.perTry());
+    text += "Switch Mode      : " + proxyServer->RFprocessor->mode + "\n";
+    text += "--------------------------------------\n";
+
+    QTextStream out(stdout);
+    out << text;
+    out.flush();
 }

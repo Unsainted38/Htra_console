@@ -9,7 +9,7 @@
 #include <QDataStream>
 #include <QIODevice>
 #include <QDebug>
-#include "hrtta_processor.h"
+#include "devices/i_htra_device.h"
 #include "switcher_processor.h"
 
 const quint8 HEADER = 0x55;
@@ -41,16 +41,15 @@ class HtraProxyServer : public QObject {
     QHostAddress ListenIp;
     quint16 port;
     QString name;
-    HtraProcessor *processor;
+    IHtraDevice &m_device;
 
     QByteArray buffer;
     QTcpSocket *currentClient;
     quint64 transportId;
 public:
-    explicit HtraProxyServer(QString configPath, QString section, QObject *parent = nullptr);
+    explicit HtraProxyServer(QString configPath, QString section, IHtraDevice &device, QObject *parent = nullptr);
 
     void sendReply(QByteArray reply);
-    void setHtraProcessor(HtraProcessor *implement);
     SwitcherProcessor *RFprocessor;
 signals:
     void translateData(QByteArray);

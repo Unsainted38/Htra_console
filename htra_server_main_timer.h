@@ -3,25 +3,34 @@
 
 #include <QObject>
 #include <QTimer>
-#include <QList>
-#include "hrtta_processor.h"
-#include <htra_proxy_server.h>
-#include <htra_telemetry_server.h>
 #include <QDebug>
+
+#include "devices/i_htra_device.h"
+#include <htra_proxy_server.h>
+#include <telemetry/htra_telemetry_server.h>
+#include <telemetry/telemetry_packet_source.h>
+#include <providers/htra_telemetry_provider.h>
+#include <builders/htra_packet_builder.h>
+#include <dto/htra_telemetry_data.h>
 #include <utilities/console_utilities.h>
 
 class HtraServerMainTimer : public QObject {
     Q_OBJECT
 public:
-    explicit HtraServerMainTimer(QObject *parent = 0);
+    explicit HtraServerMainTimer(IHtraDevice &device, QObject *parent = 0);
 
 signals:
 private:
     HtraProxyServer *proxyServer;
     QTimer *m_loggerTimer;
 
-    HtraProcessor *m_processor;
+    IHtraDevice &m_device;
     HtraTelemetryServer *htraTelemetryServer;
+
+    HtraTelemetryProvider provider;
+    HtraPacketBuilder builder;
+    TelemetryPacketSource<HtraTelemetryData> packetSource;
+
 private slots:
     void onLogerTimer();
 };

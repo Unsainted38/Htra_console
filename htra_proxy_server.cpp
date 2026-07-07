@@ -1,18 +1,19 @@
 #include "htra_proxy_server.h"
 
-HtraProxyServer::HtraProxyServer(QString configPath, QString section, QObject *parent)
+HtraProxyServer::HtraProxyServer(QString configPath, QString section, IHtraDevice &device, QObject *parent)
     : QObject(parent),
       configPath(configPath),
-      section(section) {
+      section(section),
+      m_device(device) {
     loadConfig();
     server = new QTcpServer(this);
 
-    RFprocessor = new SwitcherProcessor(QCoreApplication::applicationDirPath() + "/transport/config.ini", "ArduinoRFSwitcher");
+    RFprocessor = new SwitcherProcessor(QCoreApplication::applicationDirPath() + "/etc/transport/config.ini", "ArduinoRFSwitcher");
 
     if(server->listen(QHostAddress::Any, port)) {
-        qDebug() << name << "started on ip" << ServerAddress.toString() << ":" << port;
+        qDebug() << name << "started on port:" << port;
     } else {
-        qDebug() << name << "start failed on ip" << ServerAddress.toString() << ":" << port;
+        qDebug() << name << "start failed on port:" << port;
     }
 
     connect(server, SIGNAL(newConnection()), this, SLOT(onNewConnection()));
@@ -41,10 +42,6 @@ void HtraProxyServer::sendReply(QByteArray reply) {
     }
 
     currentClient->write(reply);
-}
-
-void HtraProxyServer::setHtraProcessor(HtraProcessor *implement) {
-    processor = implement;
 }
 
 
@@ -113,11 +110,11 @@ void HtraProxyServer::ProcessHtraCmd(QByteArray packet) {
 
     switch(cmdId) {
         case HTRA_CMD::CENTER_FREQ:
-            processor->onSetCenter(transportId, value);
+            m_device.onSetCenter(value);
             break;
 
         case HTRA_CMD::LEVEL:
-            processor->onSetLevel(transportId, value);
+            m_device.onSetLevel(value);
             break;
 
         case HTRA_CMD::PICK:
@@ -125,31 +122,31 @@ void HtraProxyServer::ProcessHtraCmd(QByteArray packet) {
             break;
 
         case HTRA_CMD::PICK_SEARCH_CENTER:
-            processor->onSetPickSearchCenter(transportId, value);
+            m_device.onSetPickSearchCenter(value);
             break;
 
         case HTRA_CMD::PICK_SEARCH_FULL_SPAN:
-            processor->onSetPickSearchFullSpan(transportId);
+            m_device.onSetPickSearchFullSpan();
             break;
 
         case HTRA_CMD::PICK_SEARCH_TYPE:
-            processor->onSetPickSearchType(transportId, value);
+            m_device.onSetPickSearchType(value);
             break;
 
         case HTRA_CMD::PICK_SEARCH_WIDTH:
-            processor->onSetPickSearchWidth(transportId, value);
+            m_device.onSetPickSearchWidth(value);
             break;
 
         case HTRA_CMD::RBW:
-            processor->onSetRbw(transportId, value);
+            m_device.onSetRbw(value);
             break;
 
         case HTRA_CMD::SPAN:
-            processor->onSetSpan(transportId, value);
+            m_device.onSetSpan(value);
             break;
 
         case HTRA_CMD::VBW:
-            processor->onSetVbw(transportId, value);
+            m_device.onSetVbw(value);
             break;
 
         case HTRA_CMD::RF1:
@@ -189,22 +186,22 @@ void HtraProxyServer::makeResponse(quint8 cmdId) {
     switch(cmdId) {
         case HTRA_CMD::CENTER_FREQ:
             out << (quint8)4;
-            out << static_cast<float>(processor->centerFreq());
+            out << static_cast<float>(m_device.centerFreq());
             break;
 
         case HTRA_CMD::LEVEL:
             out << (quint8)4;
-            out << static_cast<float>(processor->level());
+            out << static_cast<float>(m_device.level());
             break;
 
         case HTRA_CMD::PICK:
             out << (quint8)4;
-            out << static_cast<float>(processor->pick());
+            out << static_cast<float>(m_device.pick());
             break;
 
         case HTRA_CMD::PICK_SEARCH_CENTER:
             out << (quint8)4;
-            out << static_cast<float>(processor->pickSearchCenter());
+            out << static_cast<float>(m_device.pickSearchCenter());
             break;
 
         case HTRA_CMD::PICK_SEARCH_FULL_SPAN:
@@ -213,27 +210,27 @@ void HtraProxyServer::makeResponse(quint8 cmdId) {
 
         case HTRA_CMD::PICK_SEARCH_TYPE:
             out << (quint8)4;
-            out << static_cast<float>(processor->pickSearchType());
+            out << static_cast<float>(m_device.pickSearchType());
             break;
 
         case HTRA_CMD::PICK_SEARCH_WIDTH:
             out << (quint8)4;
-            out << static_cast<float>(processor->pickSearchWidth());
+            out << static_cast<float>(m_device.pickSearchWidth());
             break;
 
         case HTRA_CMD::RBW:
             out << (quint8)4;
-            out << static_cast<float>(processor->rbw());
+            out << static_cast<float>(m_device.rbw());
             break;
 
         case HTRA_CMD::SPAN:
             out << (quint8)4;
-            out << static_cast<float>(processor->span());
+            out << static_cast<float>(m_device.span());
             break;
 
         case HTRA_CMD::VBW:
             out << (quint8)4;
-            out << static_cast<float>(processor->vbw());
+            out << static_cast<float>(m_device.vbw());
             break;
 
         case HTRA_CMD::RF1:
