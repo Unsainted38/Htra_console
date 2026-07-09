@@ -1,4 +1,10 @@
-include($${_PRO_FILE_PWD_}/../playground/common_lib/common_lib.pri)
+COMMON_LIB_PATH = $$clean_path($$PWD/third_party/common_lib)
+
+!exists($$COMMON_LIB_PATH/common_lib.pri) {
+    error("common_lib not found. Run: git submodule update --init --recursive")
+}
+
+include($$COMMON_LIB_PATH/common_lib.pri)
 
 QT       += core network
 CONFIG   += console c++17
