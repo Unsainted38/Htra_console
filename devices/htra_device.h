@@ -6,7 +6,7 @@
 #include <QElapsedTimer>
 #include <QVector>
 
-#include "htra_api.h"
+#include <htra_api.h>
 #include "devices/i_htra_device.h"
 
 class HtraDevice : public IHtraDevice {
