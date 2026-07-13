@@ -1,0 +1,3 @@
+[submodule "third_party/common_lib"]
+    path = third_party/common_lib
+    url = git@github.com:Unsainted38/common_lib.git
