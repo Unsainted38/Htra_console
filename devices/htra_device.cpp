@@ -10,12 +10,12 @@ HtraDevice::HtraDevice(QObject *parent)
     Status = 0;                  //The function return value or error code. Status == 0 indicates no error. For details please check the Appendix 1 in the API Guide document.
     Device = NULL;              //Device handle. Use the device handle to specify device for manipulating in the API calls. The device handle must be initialized firstly by function Devcie_Open before it to be used.
 
-    m_ReconnectTimer = new QTimer;
+    m_ReconnectTimer = new QTimer(this);
     m_ReconnectTimer->setInterval(1000);
     connect(m_ReconnectTimer, SIGNAL(timeout()), SLOT(onReconnectTimer()));
     m_ReconnectTimer->start();
 
-    m_WorkTimer = new QTimer;
+    m_WorkTimer = new QTimer(this);
     m_WorkTimer->setInterval(100);
     connect(m_WorkTimer, SIGNAL(timeout()), SLOT(onWorkTimer()));
     m_WorkTimer->start();
@@ -23,9 +23,12 @@ HtraDevice::HtraDevice(QObject *parent)
     m_ReconfigureTimer = new QTimer(this);
     m_ReconfigureTimer->setInterval(1000);
     connect(m_ReconfigureTimer, SIGNAL(timeout()), this, SLOT(onReconfigureTimer()));
+}
 
-
-    m_elapsedTime.start();
+HtraDevice::~HtraDevice() {
+    if(Device != nullptr) {
+        Device_Close(&Device);
+    }
 }
 
 double HtraDevice::centerFreq() const {
@@ -55,7 +58,7 @@ uint32_t HtraDevice::sweepCount() {
 QVector<float> HtraDevice::getMinSweep() {
     QVector<float> result;
 
-    for(int i = 0; i < TraceInfo.FullsweepTracePoints; ++i) {
+    for(int i = 0; i < TraceInfo.FullsweepTracePoints && i < PowerSpec_dBm.size(); ++i) {
         result.append(PowerSpec_dBm[i]);
     }
 
@@ -102,12 +105,12 @@ void HtraDevice::onReconnectTimer() {
         }
 
         m_ReconfigureTimer->stop();
-        qDebug() << "Timer start";
+        //qDebug() << "Timer start";
         m_connected = false;
 
 
-        BootProfile_TypeDef BootProfile; //Parameters for device boot.
-        BootInfo_TypeDef BootInfo;       //Feedback information of the devic boot. Hardware version, firmware version and other information.
+        BootProfile_TypeDef BootProfile{}; //Parameters for device boot.
+        BootInfo_TypeDef BootInfo{};       //Feedback information of the devic boot. Hardware version, firmware version and other information.
 
         BootProfile.DevicePowerSupply = USBPortAndPowerPort; //Both the USB data port and independent power port are used for power supply.
         BootProfile.PhysicalInterface = USB;				 //Usb interface for data transfer.
@@ -118,7 +121,7 @@ void HtraDevice::onReconnectTimer() {
         if(Status == APIRETVAL_NoError) {
             printf("Device is opened successfully\n");
             m_ReconfigureTimer->start();
-            qDebug() << "Timer start";
+            //qDebug() << "Timer start";
         }
         /*if failed, an error code is returned.Please re-open the device according to suggestions*/
         else {
@@ -148,58 +151,34 @@ void HtraDevice::onReconnectTimer() {
                     break;
             }
 
-            if(Status < 0) {
-                m_connected = false;
-                Device = NULL;
-                return;
-            }
-
+            m_connected = false;
+            Device = NULL;
+            return;
         }
 
 
         Status = Device_QueryDeviceInfo(&Device, &DeviceInfo); //obtain device information including device UID,model, firmware etc.
+        if(Status != APIRETVAL_NoError) {
+            Device_Close(&Device);
+            Device = nullptr;
+            return;
+        }
+
         qDebug() << "--------------DeviceUID       : " << DeviceInfo.DeviceUID;
         qDebug() << "--------------Model           : " << DeviceInfo.Model;
         qDebug() << "--------------HardwareVersion : " << DeviceInfo.HardwareVersion;
         qDebug() << "--------------MFWVersion      : " << DeviceInfo.MFWVersion;
         qDebug() << "--------------FFWVersion      : " << DeviceInfo.FFWVersion;
 
-        m_centerFreq = 3e9;
-        m_span = 0.25e9;
-        m_rbw = 100e3;
-        m_vbw = 100e3;
-        m_level = 0;
         m_connected = reconfigure();
     }
 }
 
 void HtraDevice::onWorkTimer() {
     if(!m_connected) {
-        if(Device != NULL) {
-            m_centerFreq = 3e9;
-            m_span = 0.25e9;
-            m_rbw = 100e3;
-            m_vbw = 100e3;
-            m_level = 0;
-        }
-
         m_ReconfigureTimer->stop();
-        qDebug() << "Timer stop";
+        //qDebug() << "Timer stop";
         return;
-    }
-
-    if(m_connected) {
-        if(m_elapsedTime.elapsed() >= 20000) {
-            m_centerFreq = 3e9;
-            m_span = 0.25e9;
-            m_rbw = 100e3;
-            m_vbw = 100e3;
-            m_level = 0;
-            m_connected = false;
-            m_ReconfigureTimer->stop();
-            qDebug() << "Timer stop";
-            return;
-        }
     }
 
     m_WorkTimer->stop();
@@ -222,7 +201,6 @@ void HtraDevice::onWorkTimer() {
         m_connected = false;
     }
 
-    m_elapsedTime.restart();
     m_WorkTimer->start();
     //m_ReconfigureTimer->start();
     //qDebug() << "Timer start";
@@ -234,13 +212,18 @@ void HtraDevice::onReconfigureTimer() {
 
 bool HtraDevice::reconfigure() {
 
-    SWP_ProfileDeInit(&Device, &SWP_ProfileIn);           //initialize the SWP_ProfileIn.
+    Status = SWP_ProfileDeInit(&Device, &SWP_ProfileIn);  //initialize the SWP_ProfileIn.
+    if(Status != APIRETVAL_NoError) {
+        return false;
+    }
+
     SWP_ProfileIn.CenterFreq_Hz = m_centerFreq;
     SWP_ProfileIn.Span_Hz = m_span;
     SWP_ProfileIn.StartFreq_Hz = m_centerFreq - (m_span / 2.0);
     SWP_ProfileIn.StopFreq_Hz =  m_centerFreq + (m_span / 2.0);
     SWP_ProfileIn.RefLevel_dBm = m_level;
     SWP_ProfileIn.RBW_Hz = m_rbw;
+    SWP_ProfileIn.RBWMode = RBW_Manual;
     SWP_ProfileIn.VBW_Hz = m_vbw;
     SWP_ProfileIn.VBWMode = VBW_Manual;
 
@@ -266,8 +249,12 @@ bool HtraDevice::reconfigure() {
         return false;
     }
 
-    DeviceState_TypeDef DeviceState;                                  //Device state includs the temperature, the RF state etc.
+    DeviceState_TypeDef DeviceState{};                                  //Device state includs the temperature, the RF state etc.
     Status = Device_QueryDeviceState_Realtime(&Device, &DeviceState); //Obtain device state includs the temperature, the RF state etc.
+
+    if(Status != APIRETVAL_NoError) {
+        return false;
+    }
 
     Frequency.resize(TraceInfo.FullsweepTracePoints);
     PowerSpec_dBm.resize(TraceInfo.FullsweepTracePoints);
@@ -290,12 +277,14 @@ double HtraDevice::getSimpleMaximum() const {
     double indexLeft = m_pickSearchCenter - m_pickSearchWidth / 2.0;
     double indexRight = m_pickSearchCenter + m_pickSearchWidth / 2.0;
 
-    double max = spectrum.value(0, -300.0);
+    double max = -300.0;
+    bool found = false;
 
     for(int i = 0; i < spectrum.count(); ++i) {
         if((index >= indexLeft) && (index <= indexRight)) {
-            if(max < spectrum[i]) {
+            if(!found || max < spectrum[i]) {
                 max = spectrum[i];
+                found = true;
             }
         }
 
@@ -303,7 +292,7 @@ double HtraDevice::getSimpleMaximum() const {
     }
 
     //return pick();
-    return max;
+    return found ? max : -300.0;
 }
 
 double HtraDevice::getIntegralMaximum() const {
@@ -312,7 +301,7 @@ double HtraDevice::getIntegralMaximum() const {
 
     QVector<float> spectrum = PowerSpec_dBm;
 
-    if(spectrum.count() <= 0) {
+    if(spectrum.count() <= 0 || m_pickSearchWidth <= 0.0) {
         return -300.0;
     }
 
@@ -332,7 +321,7 @@ double HtraDevice::getIntegralMaximum() const {
     }
 
     if(m_itemCount == 0) {
-        return spectrum.value(0, -300.0);
+        return -300.0;
     }
 
     sum /= m_pickSearchWidth;

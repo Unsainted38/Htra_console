@@ -1,10 +1,11 @@
-COMMON_LIB_PATH = $$clean_path($$PWD/third_party/common_lib)
+COMMON_LIB_PATH = $$clean_path($$PWD/../common_lib)
 
 !exists($$COMMON_LIB_PATH/common_lib.pri) {
     error("common_lib not found. Run: git submodule update --init --recursive")
 }
 
 include($$COMMON_LIB_PATH/common_lib.pri)
+include($$COMMON_LIB_PATH/common_build.pri)
 
 QT += core network serialport
 
@@ -51,7 +52,6 @@ contains(CONFIG, htra_mock) {
             LIBS += -lfftw3-3
             LIBS += -lliquid
         }
-
         msvc {
             # MSVC:
             # If SDK provides .lib files, link them directly.
@@ -61,11 +61,12 @@ contains(CONFIG, htra_mock) {
         }
     }
 
-    linux {
-        message("Build with real libhtraapi for Linux")
+    debian13_x86_64-g++ {
+        message("Build with real libhtraapi for Debian 13")
 
-        HTRA_LIB_PATH = $$HTRA_SDK_PATH/lib/linux/x64
-
+        HTRA_LIB_PATH = $$HTRA_SDK_PATH/lib/x86_64
+        INCLUDEPATH += $$HTRA_SDK_PATH/inc
+        message($$HTRA_LIB_PATH)
         LIBS += -L$$HTRA_LIB_PATH
         LIBS += -lhtraapi
         LIBS += -lfftw3
@@ -89,6 +90,7 @@ SOURCES += \
     builders/htra_packet_builder.cpp \
     devices/mock_htra_device.cpp \
     htra_proxy_server.cpp \
+    htra_protocol.cpp \
     htra_server_main_timer.cpp \
     main.cpp \
     providers/htra_telemetry_provider.cpp \
@@ -101,6 +103,7 @@ HEADERS += \
     devices/mock_htra_device.h \
     dto/htra_telemetry_data.h \
     htra_proxy_server.h \
+    htra_protocol.h \
     htra_server_main_timer.h \
     providers/htra_telemetry_provider.h \
     switcher_processor.h \

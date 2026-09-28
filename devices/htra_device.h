@@ -13,6 +13,7 @@ class HtraDevice : public IHtraDevice {
     Q_OBJECT
 public:
     explicit HtraDevice(QObject *parent = nullptr);
+    ~HtraDevice() override;
     double centerFreq() const override;
     double level() const override;
     double span() const override;
@@ -33,35 +34,33 @@ private slots:
     void onWorkTimer();
     void onReconfigureTimer();
 private:
-    bool m_connected;
+    bool m_connected = false;
 
-    QTimer *m_ReconnectTimer;
-    QTimer *m_WorkTimer;
-    QTimer *m_ReconfigureTimer;
+    QTimer *m_ReconnectTimer = nullptr;
+    QTimer *m_WorkTimer = nullptr;
+    QTimer *m_ReconfigureTimer = nullptr;
 
-    double m_centerFreq;
-    double m_level;
-    double m_span;
-    double m_rbw;
-    double m_vbw;
+    double m_centerFreq = 3e9;
+    double m_level = 0.0;
+    double m_span = 0.25e9;
+    double m_rbw = 100e3;
+    double m_vbw = 100e3;
 
-    uint8_t m_pickSearchType;
-    double m_pickSearchCenter;
-    double m_pickSearchWidth;
+    uint8_t m_pickSearchType = PowerPickType::SIMPLE_MAXIMUM;
+    double m_pickSearchCenter = 3e9;
+    double m_pickSearchWidth = 0.25e9;
 
-    QElapsedTimer m_elapsedTime;
+    int Status = 0; //The function return value or error code. Status == 0 indicates no error. For details please check the Appendix 1 in the API Guide document.
 
-    int Status; //The function return value or error code. Status == 0 indicates no error. For details please check the Appendix 1 in the API Guide document.
-
-    mutable void *Device;             //Device handle. Use the device handle to specify device for manipulating in the API calls. The device handle must be initialized firstly by function Devcie_Open before it to be used.
-    DeviceInfo_TypeDef DeviceInfo;                         //device information including device UID, model, firmware version, etc is stored in this structure.
-    SWP_Profile_TypeDef SWP_ProfileIn;                    //configure parameters for SWP mode including start/stop frequency, RBW, R.L. etc.
-    SWP_Profile_TypeDef SWP_ProfileOut;                   //feedback information including start/stop frequency, RBW, R.L. etc.
-    SWP_TraceInfo_TypeDef TraceInfo;                      //feedback information for the current trace including trace points etc.
+    mutable void *Device = nullptr;             //Device handle. Use the device handle to specify device for manipulating in the API calls. The device handle must be initialized firstly by function Devcie_Open before it to be used.
+    DeviceInfo_TypeDef DeviceInfo{};                         //device information including device UID, model, firmware version, etc is stored in this structure.
+    SWP_Profile_TypeDef SWP_ProfileIn{};                    //configure parameters for SWP mode including start/stop frequency, RBW, R.L. etc.
+    SWP_Profile_TypeDef SWP_ProfileOut{};                   //feedback information including start/stop frequency, RBW, R.L. etc.
+    SWP_TraceInfo_TypeDef TraceInfo{};                      //feedback information for the current trace including trace points etc.
 
     int HopIndex = 0;                                                 //Hop index.
     int FrameIndex = 0;                                               //Frame index.
-    MeasAuxInfo_TypeDef MeasAuxInfo;                                  //Auxiliary measurement information.
+    MeasAuxInfo_TypeDef MeasAuxInfo{};                                  //Auxiliary measurement information.
 
     QVector<double> Frequency;
     QVector<float> PowerSpec_dBm;
@@ -69,7 +68,7 @@ private:
     uint64_t m_allEllapsed = 0;
     uint64_t m_count = 0;
 
-    double m_perTry;
+    double m_perTry = 0.0;
 
     bool reconfigure();
     double getSimpleMaximum() const;

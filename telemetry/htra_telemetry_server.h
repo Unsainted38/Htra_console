@@ -8,9 +8,6 @@
 
 class HtraTelemetryServer final : public TcpTelemetryServer {
     Q_OBJECT
-    const QString &fileName;
-    const QString &section;
-    int period;
 public:
     explicit HtraTelemetryServer(
         const QString &fileName,

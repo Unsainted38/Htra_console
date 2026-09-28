@@ -9,28 +9,10 @@
 #include <QDataStream>
 #include <QIODevice>
 #include <QDebug>
+#include <QHash>
 #include "devices/i_htra_device.h"
+#include "htra_protocol.h"
 #include "switcher_processor.h"
-
-const quint8 HEADER = 0x55;
-
-struct HTRA_CMD {
-    inline static const quint8 CENTER_FREQ = 0x01;
-    inline static const quint8 LEVEL = 0x02;
-    inline static const quint8 SPAN = 0x03;
-    inline static const quint8 RBW = 0x04;
-    inline static const quint8 VBW = 0x05;
-    inline static const quint8 PICK = 0x06;
-    inline static const quint8 PICK_SEARCH_TYPE = 0x07;
-    inline static const quint8 PICK_SEARCH_CENTER = 0x08;
-    inline static const quint8 PICK_SEARCH_WIDTH = 0x09;
-    inline static const quint8 PICK_SEARCH_FULL_SPAN = 0x10;
-    inline static const quint8 RF1 = 0x11;
-    inline static const quint8 RF2 = 0x12;
-    inline static const quint8 RF3 = 0x13;
-    inline static const quint8 RF4 = 0x14;
-    inline static const quint8 RFoff = 0x15;
-};
 
 class HtraProxyServer : public QObject {
     Q_OBJECT
@@ -43,23 +25,18 @@ class HtraProxyServer : public QObject {
     QString name;
     IHtraDevice &m_device;
 
-    QByteArray buffer;
-    QTcpSocket *currentClient;
-    quint64 transportId;
+    QHash<QTcpSocket *, QByteArray> clientBuffers;
 public:
     explicit HtraProxyServer(QString configPath, QString section, IHtraDevice &device, QObject *parent = nullptr);
 
-    void sendReply(QByteArray reply);
+    void sendReply(QTcpSocket *clientSocket, const QByteArray &reply);
     SwitcherProcessor *RFprocessor;
 signals:
     void translateData(QByteArray);
     void translateLastPacket(QByteArray);
 private:
     void loadConfig();
-    bool ParseData(QByteArray &data);
-    void ProcessHtraCmd(QByteArray packet);
-    void ProcessSwitcherCmd(QByteArray packet);
-    void makeResponse(quint8 cmdId);
+    void processHtraCmd(const QByteArray &packet, QTcpSocket *clientSocket);
 public slots:
     void onNewConnection();
     void onDataReady();

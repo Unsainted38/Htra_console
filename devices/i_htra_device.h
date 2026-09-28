@@ -4,8 +4,8 @@
 #include <QObject>
 
 struct PowerPickType {
-    static const quint8 SIMPLE_MAXIMUM = 0;
-    static const quint8 INTEGRAL_MAXIMUM = 1;
+    inline static constexpr quint8 SIMPLE_MAXIMUM = 0;
+    inline static constexpr quint8 INTEGRAL_MAXIMUM = 1;
 
     static QString getPickSearchType(quint8 type) {
         QString res;

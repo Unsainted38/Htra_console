@@ -7,7 +7,5 @@ HtraTelemetryServer::HtraTelemetryServer(
     int period,
     ITelemetryPacketSource &source,
     QObject *parent) :
-    TcpTelemetryServer(fileName, section, period, source, parent),
-        fileName(fileName),
-        section(section) {
+    TcpTelemetryServer(fileName, section, period, source, parent) {
 }

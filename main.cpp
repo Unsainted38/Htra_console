@@ -15,7 +15,7 @@ int main(int argc, char *argv[]) {
 #else
     HtraDevice device;
 #endif
-    HtraServerMainTimer *mainTimer = new HtraServerMainTimer(device);
+    new HtraServerMainTimer(device, &a);
 
 
     return a.exec();

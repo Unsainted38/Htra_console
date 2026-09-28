@@ -195,6 +195,21 @@ qmake "CONFIG+=htra_mock" htra_console.pro
 make
 ```
 
+## Tests
+
+The unit tests use a small HTRA API stub, so they do not require a connected
+spectrum analyzer or the proprietary SDK library. They cover the command wire
+format used by `SppsBasClient`, fragmented TCP frames, telemetry serialization,
+mock-device behavior and real-device configuration logic.
+
+```bash
+mkdir -p build/tests
+cd build/tests
+qmake ../../tests/tests.pro
+make
+./tst_htra_console
+```
+
 ## Configuration Notes
 
 The project is intended to be used as part of a larger hardware-oriented software stack. Some paths to shared libraries and SDK files may need to be adjusted for a local development environment.

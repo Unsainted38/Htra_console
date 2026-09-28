@@ -15,16 +15,18 @@ HtraServerMainTimer::HtraServerMainTimer(
         "/etc/client_server/config.ini",
         "HtraTelemetryServer",
         100,
-        packetSource
+        packetSource,
+        this
     );
     proxyServer = new HtraProxyServer(
         QCoreApplication::applicationDirPath() +
         "/etc/client_server/config.ini",
         "HtraProxyServer",
-        m_device);
+        m_device,
+        this);
     connect(&m_device, SIGNAL(translateDataReady()), htraTelemetryServer, SLOT(sendTelemetry()));
 
-    m_loggerTimer = new QTimer;
+    m_loggerTimer = new QTimer(this);
     m_loggerTimer->setInterval(250);
     connect(m_loggerTimer, SIGNAL(timeout()), SLOT(onLogerTimer()));
     m_loggerTimer->start();
