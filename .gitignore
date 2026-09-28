@@ -6,6 +6,7 @@ release/
 out/
 bin/
 lib/
+tests/
 
 # Qt Creator user files
 *.pro.user
@@ -13,6 +14,8 @@ lib/
 *.pri.user
 *.qbs.user
 *.qbs.user.*
+*.qtc_clangd
+*.qmake.stash
 
 # Qt Creator CMake build
 CMakeLists.txt.user
