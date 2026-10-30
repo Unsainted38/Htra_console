@@ -1,11 +1,12 @@
-COMMON_LIB_PATH = $$clean_path($$PWD/../common_lib)
+COMMON_LIB_ROOT = $$clean_path($$PWD/../common_lib)
 
-!exists($$COMMON_LIB_PATH/common_lib.pri) {
+!exists($$COMMON_LIB_ROOT/common_lib.pri) {
     error("common_lib not found. Run: git submodule update --init --recursive")
 }
 
-include($$COMMON_LIB_PATH/common_lib.pri)
-include($$COMMON_LIB_PATH/common_build.pri)
+include($$COMMON_LIB_ROOT/common_lib.pri)
+include($$COMMON_LIB_ROOT/common_build.pri)
+include($$COMMON_LIB_ROOT/common_deploy.pri)
 
 QT += core network serialport
 
@@ -73,10 +74,6 @@ contains(CONFIG, htra_mock) {
         LIBS += -lusb-1.0
         LIBS += -lliquid
         LIBS += -lpthread
-
-        # Optional: helps the app find .so files at runtime
-        # if they are located in the SDK folder.
-        QMAKE_LFLAGS += -Wl,-rpath,$$HTRA_LIB_PATH
     }
 
     SOURCES += \
